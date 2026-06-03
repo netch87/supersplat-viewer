@@ -29,16 +29,15 @@ import { version as appVersion } from '../package.json';
 
 type GsplatSource = {
     contentUrl: string,
-    contents: Promise<Response>,
+    contents?: Promise<Response>,
     entityName: string
 };
 
 const loadGsplat = async (app: AppBase, source: GsplatSource, progressCallback: (progress: number) => void) => {
     const { contents, contentUrl, entityName } = source;
-    const c = contents as unknown as ArrayBuffer;
     const filename = new URL(contentUrl, location.href).pathname.split('/').pop();
-    const data = filename.toLowerCase() === 'meta.json' ? await (await contents).json() : undefined;
-    const asset = new Asset(filename, 'gsplat', { url: contentUrl, filename, contents: c }, data);
+    const data = filename.toLowerCase() === 'meta.json' ? await (await (contents ?? fetch(contentUrl))).json() : undefined;
+    const asset = new Asset(filename, 'gsplat', { url: contentUrl, filename }, data);
 
     return new Promise<Entity>((resolve, reject) => {
         asset.on('load', () => {
@@ -291,7 +290,7 @@ const main = async (canvas: HTMLCanvasElement, settingsJson: any, config: Config
             app,
             {
                 contentUrl: (config.contentUrlA ?? config.contentUrl) as string,
-                contents: (config.contentsA ?? config.contents) as Promise<Response>,
+                contents: config.contentsA ?? config.contents,
                 entityName: isCompareMode ? 'gsplat-a' : 'gsplat'
             },
             (progress: number) => {
@@ -305,7 +304,7 @@ const main = async (canvas: HTMLCanvasElement, settingsJson: any, config: Config
             app,
             {
                 contentUrl: config.contentUrlB as string,
-                contents: config.contentsB as Promise<Response>,
+                contents: config.contentsB,
                 entityName: 'gsplat-b'
             },
             (progress: number) => {

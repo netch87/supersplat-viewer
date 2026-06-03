@@ -22,6 +22,7 @@
             const contentUrlA = url.searchParams.get('contentA');
             const contentUrlB = url.searchParams.get('contentB');
             const contentUrl = url.searchParams.has('content') ? url.searchParams.get('content') : (contentUrlA ?? './scene.compressed.ply');
+            const fetchMetaJson = (url) => url.toLowerCase().endsWith('meta.json') ? fetch(url) : undefined;
 
             const renderer = url.searchParams.has('webgl') ? 'webgl' : 'webgpu';
 
@@ -33,11 +34,11 @@
                 skyboxUrl,
                 collisionUrl,
                 contentUrl,
-                contents: fetch(contentUrl),
+                contents: fetchMetaJson(contentUrl),
                 contentUrlA,
-                contentsA: contentUrlA && contentUrlA !== contentUrl && fetch(contentUrlA),
+                contentsA: contentUrlA && contentUrlA !== contentUrl && fetchMetaJson(contentUrlA),
                 contentUrlB,
-                contentsB: contentUrlB && fetch(contentUrlB),
+                contentsB: contentUrlB && fetchMetaJson(contentUrlB),
                 noui: url.searchParams.has('noui'),
                 noanim: url.searchParams.has('noanim'),
                 nofx: url.searchParams.has('nofx'),
