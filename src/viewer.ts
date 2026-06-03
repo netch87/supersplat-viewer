@@ -176,7 +176,7 @@ class Viewer {
         }
     };
 
-    constructor(global: Global, gsplatLoad: Promise<Entity>, skyboxLoad: Promise<void> | undefined, collisionLoad: Promise<Collision> | undefined) {
+    constructor(global: Global, gsplatLoads: Promise<Entity>[], skyboxLoad: Promise<void> | undefined, collisionLoad: Promise<Collision> | undefined) {
         this.global = global;
 
         const { app, settings, config, events, state, camera, renderer } = global;
@@ -337,15 +337,47 @@ class Viewer {
         });
 
         // wait for the model to load
-        Promise.all([gsplatLoad, skyboxLoad, collisionLoad]).then((results) => {
-            const gsplatComponent = results[0].gsplat as GSplatComponent;
+        Promise.all([Promise.all(gsplatLoads), skyboxLoad, collisionLoad]).then((results) => {
+            const gsplatEntities = results[0];
             const collision = results[2];
 
             // get scene bounding box
-            const gsplatBbox = gsplatComponent.customAabb;
-            if (gsplatBbox) {
-                sceneBound.setFromTransformedAabb(gsplatBbox, results[0].getWorldTransform());
+            const bounds = gsplatEntities
+            .map((entity) => {
+                const gsplatComponent = entity.gsplat as GSplatComponent;
+                const gsplatBbox = gsplatComponent.customAabb;
+                if (!gsplatBbox) {
+                    return null;
+                }
+
+                const bound = new BoundingBox();
+                bound.setFromTransformedAabb(gsplatBbox, entity.getWorldTransform());
+                return bound;
+            })
+            .filter((bound): bound is BoundingBox => !!bound);
+
+            if (bounds.length > 0) {
+                sceneBound.copy(bounds[0]);
+                for (let i = 1; i < bounds.length; i++) {
+                    sceneBound.add(bounds[i]);
+                }
             }
+
+            const applyCompareMode = () => {
+                const entityA = gsplatEntities[0];
+                const entityB = gsplatEntities[1];
+
+                if (!entityB) {
+                    return;
+                }
+
+                entityA.enabled = state.compareMode !== 'b';
+                entityB.enabled = state.compareMode !== 'a';
+                app.renderNextFrame = true;
+            };
+
+            events.on('compareMode:changed', applyCompareMode);
+            applyCompareMode();
 
             if (!config.noui) {
                 this.annotations = new Annotations(global, this.cameraFrame != null);
@@ -429,7 +461,7 @@ class Viewer {
                 applyPerfSettings();
             } else {
                 // reveal once low lod has loaded for fastest possible reveal
-                const resource = results[0].gsplat.resource as GSplatOctreeResourceLike | null;
+                const resource = gsplatEntities[0].gsplat.resource as GSplatOctreeResourceLike | null;
                 const lodLevels = resource?.octree?.lodLevels;
                 if (lodLevels) {
                     gsplat.lodRangeMax = gsplat.lodRangeMin = lodLevels - 1;

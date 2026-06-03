@@ -6,12 +6,18 @@ type CameraMode = 'orbit' | 'anim' | 'fly' | 'walk';
 
 type InputMode = 'desktop' | 'touch';
 
+type CompareMode = 'a' | 'b' | 'overlay';
+
 // configuration options are immutable at runtime
 type Config = {
     poster?: HTMLImageElement;
     skyboxUrl?: string;
     contentUrl?: string;
     contents?: Promise<Response>;
+    contentUrlA?: string;
+    contentsA?: Promise<Response>;
+    contentUrlB?: string;
+    contentsB?: Promise<Response>;
     collisionUrl?: string;
 
     noui: boolean;
@@ -49,6 +55,7 @@ type State = {
     isFullscreen: boolean;
     controlsHidden: boolean;
     gamingControls: boolean;
+    compareMode: CompareMode;
 };
 
 type Global = {
@@ -61,4 +68,4 @@ type Global = {
     renderer: 'webgl' | 'webgpu';               // actual renderer in use (reflects engine fallback from WebGPU to WebGL2)
 };
 
-export { CameraMode, InputMode, Config, State, Global };
+export { CameraMode, InputMode, CompareMode, Config, State, Global };

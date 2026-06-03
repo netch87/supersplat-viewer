@@ -295,6 +295,14 @@ button {
                 color: $clr-accent;
             }
 
+            &.compareButton {
+                width: auto;
+                min-width: 58px;
+                padding: 0 8px;
+                font-size: 12px;
+                white-space: nowrap;
+            }
+
             /* camera toggle styling */
             &.toggle {
                 background: linear-gradient(

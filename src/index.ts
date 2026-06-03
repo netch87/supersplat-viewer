@@ -27,8 +27,14 @@ import { Viewer } from './viewer';
 import { initXr } from './xr';
 import { version as appVersion } from '../package.json';
 
-const loadGsplat = async (app: AppBase, config: Config, progressCallback: (progress: number) => void) => {
-    const { contents, contentUrl } = config;
+type GsplatSource = {
+    contentUrl: string,
+    contents: Promise<Response>,
+    entityName: string
+};
+
+const loadGsplat = async (app: AppBase, source: GsplatSource, progressCallback: (progress: number) => void) => {
+    const { contents, contentUrl, entityName } = source;
     const c = contents as unknown as ArrayBuffer;
     const filename = new URL(contentUrl, location.href).pathname.split('/').pop();
     const data = filename.toLowerCase() === 'meta.json' ? await (await contents).json() : undefined;
@@ -36,7 +42,7 @@ const loadGsplat = async (app: AppBase, config: Config, progressCallback: (progr
 
     return new Promise<Entity>((resolve, reject) => {
         asset.on('load', () => {
-            const entity = new Entity('gsplat');
+            const entity = new Entity(entityName);
             entity.setLocalEulerAngles(0, 0, 180);
             entity.addComponent('gsplat', {
                 unified: true,
@@ -238,7 +244,8 @@ const main = async (canvas: HTMLCanvasElement, settingsJson: any, config: Config
         collisionOverlayEnabled: false,
         isFullscreen: false,
         controlsHidden: false,
-        gamingControls: localStorage.getItem('gamingControls') === 'true'
+        gamingControls: localStorage.getItem('gamingControls') === 'true',
+        compareMode: 'overlay'
     });
 
     const global: Global = {
@@ -271,14 +278,41 @@ const main = async (canvas: HTMLCanvasElement, settingsJson: any, config: Config
     initLocalization();
     initUI(global);
 
-    // Load model
-    const gsplatLoad = loadGsplat(
-        app,
-        config,
-        (progress: number) => {
-            state.progress = progress;
-        }
-    );
+    // Load model(s)
+    const isCompareMode = !!config.contentUrlB;
+    const progressValues = isCompareMode ? [0, 0] : [0];
+    const updateProgress = (index: number, progress: number) => {
+        progressValues[index] = progress;
+        state.progress = Math.trunc(progressValues.reduce((sum, value) => sum + value, 0) / progressValues.length);
+    };
+
+    const gsplatLoads = [
+        loadGsplat(
+            app,
+            {
+                contentUrl: (config.contentUrlA ?? config.contentUrl) as string,
+                contents: (config.contentsA ?? config.contents) as Promise<Response>,
+                entityName: isCompareMode ? 'gsplat-a' : 'gsplat'
+            },
+            (progress: number) => {
+                updateProgress(0, progress);
+            }
+        )
+    ];
+
+    if (isCompareMode) {
+        gsplatLoads.push(loadGsplat(
+            app,
+            {
+                contentUrl: config.contentUrlB as string,
+                contents: config.contentsB as Promise<Response>,
+                entityName: 'gsplat-b'
+            },
+            (progress: number) => {
+                updateProgress(1, progress);
+            }
+        ));
+    }
 
     // Load skybox (continue without if it fails — e.g. CORS, 404)
     const skyboxLoad = config.skyboxUrl &&
@@ -320,7 +354,7 @@ const main = async (canvas: HTMLCanvasElement, settingsJson: any, config: Config
     }
 
     // Create the viewer
-    return new Viewer(global, gsplatLoad, skyboxLoad, collisionLoad);
+    return new Viewer(global, gsplatLoads, skyboxLoad, collisionLoad);
 };
 
 console.log(`SuperSplat Viewer v${appVersion} | Engine v${engineVersion} (${engineRevision})`);

@@ -19,7 +19,9 @@
             const skyboxUrl = url.searchParams.get('skybox');
             const collisionUrl = url.searchParams.get('collision') ?? url.searchParams.get('voxel');
             const settingsUrl = url.searchParams.has('settings') ? url.searchParams.get('settings') : './settings.json';
-            const contentUrl = url.searchParams.has('content') ? url.searchParams.get('content') : './scene.compressed.ply';
+            const contentUrlA = url.searchParams.get('contentA');
+            const contentUrlB = url.searchParams.get('contentB');
+            const contentUrl = url.searchParams.has('content') ? url.searchParams.get('content') : (contentUrlA ?? './scene.compressed.ply');
 
             const renderer = url.searchParams.has('webgl') ? 'webgl' : 'webgpu';
 
@@ -32,6 +34,10 @@
                 collisionUrl,
                 contentUrl,
                 contents: fetch(contentUrl),
+                contentUrlA,
+                contentsA: contentUrlA && contentUrlA !== contentUrl && fetch(contentUrlA),
+                contentUrlB,
+                contentsB: contentUrlB && fetch(contentUrlB),
                 noui: url.searchParams.has('noui'),
                 noanim: url.searchParams.has('noanim'),
                 nofx: url.searchParams.has('nofx'),
@@ -138,6 +144,12 @@
                                 <g class='fill'><use href="#walkIcon"/></g>
                             </svg>
                         </button>
+                    </div>
+
+                    <div id="compareControls" class="buttonGroup hidden">
+                        <button id="compareA" class="controlButton compareButton toggle left">A only</button>
+                        <button id="compareB" class="controlButton compareButton toggle middle">B only</button>
+                        <button id="compareOverlay" class="controlButton compareButton toggle right">Overlay</button>
                     </div>
 
                     <div class="buttonGroup">

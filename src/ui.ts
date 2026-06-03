@@ -234,6 +234,7 @@ const initUI = (global: Global) => {
         'timelineContainer', 'handle', 'time',
         'buttonContainer',
         'play', 'pause',
+        'compareControls', 'compareA', 'compareB', 'compareOverlay',
         'settings', 'settingsPanel',
         'orbitCamera', 'flyCamera', 'fpsCamera',
         'performanceModeRow', 'performanceModeCheck', 'performanceModeOption',
@@ -388,6 +389,32 @@ const initUI = (global: Global) => {
     events.on('gamingControls:changed', updateGamingControls);
     events.on('inputMode:changed', updateGamingControls);
     updateGamingControls();
+
+    // Comparison mode controls
+    const updateCompareMode = () => {
+        dom.compareA.classList.toggle('active', state.compareMode === 'a');
+        dom.compareB.classList.toggle('active', state.compareMode === 'b');
+        dom.compareOverlay.classList.toggle('active', state.compareMode === 'overlay');
+    };
+
+    if (config.contentUrlB) {
+        dom.compareControls.classList.remove('hidden');
+    }
+
+    dom.compareA.addEventListener('click', () => {
+        state.compareMode = 'a';
+    });
+
+    dom.compareB.addEventListener('click', () => {
+        state.compareMode = 'b';
+    });
+
+    dom.compareOverlay.addEventListener('click', () => {
+        state.compareMode = 'overlay';
+    });
+
+    events.on('compareMode:changed', updateCompareMode);
+    updateCompareMode();
 
     // AR/VR
     const arChanged = () => dom.arMode.classList[state.hasAR ? 'remove' : 'add']('hidden');
