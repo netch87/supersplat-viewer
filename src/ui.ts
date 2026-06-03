@@ -234,6 +234,7 @@ const initUI = (global: Global) => {
         'timelineContainer', 'handle', 'time',
         'buttonContainer',
         'play', 'pause',
+        'compareLabels', 'compareLabelA', 'compareLabelB',
         'compareControls', 'compareA', 'compareB', 'compareOverlay',
         'settings', 'settingsPanel',
         'orbitCamera', 'flyCamera', 'fpsCamera',
@@ -391,6 +392,8 @@ const initUI = (global: Global) => {
     updateGamingControls();
 
     // Comparison mode controls
+    const filenameFromUrl = (url: string) => new URL(url, location.href).pathname.split('/').pop();
+
     const updateCompareMode = () => {
         dom.compareA.classList.toggle('active', state.compareMode === 'a');
         dom.compareB.classList.toggle('active', state.compareMode === 'b');
@@ -398,6 +401,9 @@ const initUI = (global: Global) => {
     };
 
     if (config.contentUrlB) {
+        dom.compareLabelA.textContent = `A: ${filenameFromUrl(config.contentUrlA ?? config.contentUrl)}`;
+        dom.compareLabelB.textContent = `B: ${filenameFromUrl(config.contentUrlB)}`;
+        dom.compareLabels.classList.remove('hidden');
         dom.compareControls.classList.remove('hidden');
     }
 

@@ -252,6 +252,22 @@ button {
             }
         }
 
+        .compareLabels {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 2px;
+            min-width: 90px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            line-height: 1.2;
+            white-space: nowrap;
+
+            color: $clr-text-light;
+            background-color: rgba(black, 0.3);
+        }
+
         /* controlButton */
 
         .controlButton {
