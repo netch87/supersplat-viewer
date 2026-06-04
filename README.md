@@ -15,6 +15,90 @@ This is the official viewer for [SuperSplat](https://superspl.at).
 
 The web app compiles to a simple, self-contained static website.
 
+## Compare Viewer Fork
+
+This fork adds a small comparison workflow for loading one or two Gaussian Splat files in the same viewer.
+
+### Quick Start
+
+```sh
+git clone https://github.com/netch87/supersplat-viewer.git
+cd supersplat-viewer
+git checkout feature/opacity-blend
+npm install
+npm run build
+npm run serve -- -l 3000
+```
+
+Open http://localhost:3000 in your browser.
+
+For development with automatic rebuilds, use:
+
+```sh
+npm run develop
+```
+
+Before committing changes, useful checks are:
+
+```sh
+npm run type:check
+npm run build
+npm run lint
+```
+
+### Local Sample Data
+
+Put local test splats under `public/samples`:
+
+```text
+public/samples/old.ply
+public/samples/new.ply
+```
+
+The `public/samples` folder is intended for local data. Large sample `.ply`, `.sog`, `.compressed.ply`, `.meta.json`, and `.lod-meta.json` files should stay local and are not tracked by Git.
+
+### Single Content Mode
+
+Use the original `content` parameter to load one file:
+
+```text
+http://localhost:3000/?content=/samples/old.ply
+```
+
+### Compare Mode
+
+Use `contentA` and `contentB` to load two files:
+
+```text
+http://localhost:3000/?contentA=/samples/old.ply&contentB=/samples/new.ply
+```
+
+Compare controls:
+
+| Mode | Description |
+| ---- | ----------- |
+| `A only` | Show only dataset A |
+| `B only` | Show only dataset B |
+| `Overlay` | Show A and B together in one shared 3D view |
+| `Wipe` | Drag a vertical divider to reveal A/B by screen region |
+| `Blend` | Use opacity sliders to blend A/B in one shared 3D view |
+
+Optional compare labels:
+
+```text
+http://localhost:3000/?contentA=/samples/old.ply&contentB=/samples/new.ply&labelA=before&labelB=after
+```
+
+If `labelA` or `labelB` is omitted, the UI falls back to the filename.
+
+Blend gamma tuning:
+
+```text
+http://localhost:3000/?contentA=/samples/old.ply&contentB=/samples/new.ply&blendGamma=3.0
+```
+
+`blendGamma` sets the initial Blend Gamma slider value. Higher values reduce dataset B/new around the middle of the Blend slider.
+
 ## URL Parameters
 
 The app supports a number of URL parameters (these are subject to change):
@@ -25,6 +109,11 @@ The app supports a number of URL parameters (these are subject to change):
 | --------- | ----------- | ------- |
 | `settings` | URL of the `settings.json` file | `./settings.json` |
 | `content` | URL of the scene file (`.ply`, `.sog`, `.compressed.ply`, `.meta.json`, `.lod-meta.json`) | `./scene.compressed.ply` |
+| `contentA` | URL of compare dataset A | |
+| `contentB` | URL of compare dataset B | |
+| `labelA` | Optional display label for compare dataset A | filename |
+| `labelB` | Optional display label for compare dataset B | filename |
+| `blendGamma` | Initial Blend Gamma value for compare Blend mode | `3.0` |
 | `skybox` | URL of an equirectangular skybox image | |
 | `poster` | URL of an image to show while loading | |
 | `collision` | URL of a collision asset (`.glb` mesh, or voxel data). `voxel` is accepted as an alias. | |
@@ -92,7 +181,7 @@ To initialize a local development environment for SuperSplat Viewer, ensure you 
 1. Clone the repository:
 
    ```sh
-   git clone https://github.com/playcanvas/supersplat-viewer.git
+   git clone https://github.com/netch87/supersplat-viewer.git
    cd supersplat-viewer
    ```
 
