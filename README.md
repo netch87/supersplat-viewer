@@ -46,16 +46,18 @@ npm run build
 npm run lint
 ```
 
-### Local Sample Data
+### Local Data
 
-Put local test splats under `public/samples`:
+Put local test splats under `public/samples` or organize comparison cases under `public/cases`:
 
 ```text
 public/samples/old.ply
 public/samples/new.ply
+public/cases/sample_case/old.ply
+public/cases/sample_case/new.ply
 ```
 
-The `public/samples` folder is intended for local data. Large sample `.ply`, `.sog`, `.compressed.ply`, `.meta.json`, and `.lod-meta.json` files should stay local and are not tracked by Git.
+The `public/samples` and `public/cases` folders are intended for local data. Large sample `.ply`, `.sog`, `.compressed.ply`, `.meta.json`, and `.lod-meta.json` files should stay local and are not tracked by Git.
 
 ### Single Content Mode
 
@@ -99,6 +101,47 @@ http://localhost:3000/?contentA=/samples/old.ply&contentB=/samples/new.ply&blend
 
 `blendGamma` sets the initial Blend Gamma slider value. Higher values reduce dataset B/new around the middle of the Blend slider.
 
+### Compare Manifests
+
+Use a `manifest.json` to avoid long URLs and manage each comparison as a small case/project.
+
+Example folder:
+
+```text
+public/cases/sample_case/
+  old.ply
+  new.ply
+  manifest.json
+```
+
+Example `manifest.json`:
+
+```json
+{
+  "title": "sample comparison",
+  "contentA": "/cases/sample_case/old.ply",
+  "contentB": "/cases/sample_case/new.ply",
+  "labelA": "2026-04-21_before",
+  "labelB": "2026-06-03_after",
+  "blendGamma": 3.0,
+  "defaultMode": "blend"
+}
+```
+
+Open it with:
+
+```text
+http://localhost:3000/?manifest=/cases/sample_case/manifest.json
+```
+
+URL parameters override manifest values:
+
+```text
+http://localhost:3000/?manifest=/cases/sample_case/manifest.json&defaultMode=wipe&labelA=URL_before&blendGamma=2.5
+```
+
+Manifest paths are resolved relative to the viewer page. Prefer root-based paths such as `/cases/sample_case/old.ply`.
+
 ## URL Parameters
 
 The app supports a number of URL parameters (these are subject to change):
@@ -114,6 +157,7 @@ The app supports a number of URL parameters (these are subject to change):
 | `labelA` | Optional display label for compare dataset A | filename |
 | `labelB` | Optional display label for compare dataset B | filename |
 | `blendGamma` | Initial Blend Gamma value for compare Blend mode | `3.0` |
+| `manifest` | URL of a compare manifest JSON file | |
 | `skybox` | URL of an equirectangular skybox image | |
 | `poster` | URL of an image to show while loading | |
 | `collision` | URL of a collision asset (`.glb` mesh, or voxel data). `voxel` is accepted as an alias. | |
