@@ -244,7 +244,7 @@ const main = async (canvas: HTMLCanvasElement, settingsJson: any, config: Config
         isFullscreen: false,
         controlsHidden: false,
         gamingControls: localStorage.getItem('gamingControls') === 'true',
-        compareMode: 'overlay',
+        compareMode: config.contentUrlB ? (config.defaultMode ?? 'overlay') : 'overlay',
         wipePosition: 0.5,
         blendPosition: 0.5,
         blendGamma: config.blendGamma

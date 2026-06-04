@@ -14,29 +14,36 @@
             };
 
             const url = new URL(location.href);
+            const manifestUrl = url.searchParams.get('manifest');
+            const manifest = manifestUrl ? await fetch(manifestUrl).then(response => response.json()) : {};
+            const compareModes = ['a', 'b', 'overlay', 'wipe', 'blend'];
 
             const posterUrl = url.searchParams.get('poster');
             const skyboxUrl = url.searchParams.get('skybox');
             const collisionUrl = url.searchParams.get('collision') ?? url.searchParams.get('voxel');
             const settingsUrl = url.searchParams.has('settings') ? url.searchParams.get('settings') : './settings.json';
-            const contentUrlA = url.searchParams.get('contentA');
-            const contentUrlB = url.searchParams.get('contentB');
+            const contentUrlA = url.searchParams.get('contentA') ?? manifest.contentA;
+            const contentUrlB = url.searchParams.get('contentB') ?? manifest.contentB;
             const contentUrl = url.searchParams.has('content') ? url.searchParams.get('content') : (contentUrlA ?? './scene.compressed.ply');
-            const labelA = url.searchParams.get('labelA') || undefined;
-            const labelB = url.searchParams.get('labelB') || undefined;
+            const labelA = url.searchParams.get('labelA') ?? manifest.labelA;
+            const labelB = url.searchParams.get('labelB') ?? manifest.labelB;
+            const title = url.searchParams.get('title') ?? manifest.title;
+            const defaultModeParam = url.searchParams.get('defaultMode') ?? manifest.defaultMode;
+            const defaultMode = compareModes.includes(defaultModeParam) ? defaultModeParam : undefined;
             const fetchMetaJson = (url) => url.toLowerCase().endsWith('meta.json') ? fetch(url) : undefined;
 
             const renderer = url.searchParams.has('webgl') ? 'webgl' : 'webgpu';
 
             const budgetParam = url.searchParams.get('budget');
             const budget = budgetParam !== null ? Number(budgetParam) : undefined;
-            const blendGammaParam = Number(url.searchParams.get('blendGamma') ?? 3);
+            const blendGammaParam = Number(url.searchParams.get('blendGamma') ?? manifest.blendGamma ?? 3);
             const blendGamma = Math.max(0.5, Math.min(5, Number.isFinite(blendGammaParam) ? blendGammaParam : 3));
 
             const sseConfig = {
                 poster: posterUrl && createImage(posterUrl),
                 skyboxUrl,
                 collisionUrl,
+                title,
                 contentUrl,
                 contents: fetchMetaJson(contentUrl),
                 contentUrlA,
@@ -55,6 +62,7 @@
                 aa: url.searchParams.has('aa'),
                 budget,
                 blendGamma,
+                defaultMode,
                 heatmap: url.searchParams.has('heatmap'),
                 fullload: url.searchParams.has('fullload'),
                 debug: url.searchParams.has('debug'),
@@ -155,6 +163,7 @@
                     </div>
 
                     <div id="compareLabels" class="compareLabels hidden">
+                        <div id="compareTitle"></div>
                         <div id="compareLabelA"></div>
                         <div id="compareLabelB"></div>
                     </div>

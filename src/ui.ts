@@ -234,7 +234,7 @@ const initUI = (global: Global) => {
         'timelineContainer', 'handle', 'time',
         'buttonContainer',
         'play', 'pause',
-        'compareLabels', 'compareLabelA', 'compareLabelB',
+        'compareLabels', 'compareTitle', 'compareLabelA', 'compareLabelB',
         'compareControls', 'compareA', 'compareB', 'compareOverlay', 'compareWipe', 'compareBlend',
         'compareBlendControls', 'compareBlendSlider', 'compareBlendGammaValue', 'compareBlendGammaSlider',
         'compareWipeDivider',
@@ -422,6 +422,8 @@ const initUI = (global: Global) => {
     if (config.contentUrlB) {
         const labelA = config.labelA ?? filenameFromUrl(config.contentUrlA ?? config.contentUrl);
         const labelB = config.labelB ?? filenameFromUrl(config.contentUrlB);
+        dom.compareTitle.textContent = config.title ?? '';
+        dom.compareTitle.classList.toggle('hidden', !config.title);
         dom.compareLabelA.textContent = `A: ${labelA}`;
         dom.compareLabelB.textContent = `B: ${labelB}`;
         dom.compareLabels.classList.remove('hidden');
