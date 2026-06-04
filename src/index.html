@@ -28,6 +28,8 @@
 
             const budgetParam = url.searchParams.get('budget');
             const budget = budgetParam !== null ? Number(budgetParam) : undefined;
+            const blendGammaParam = Number(url.searchParams.get('blendGamma') ?? 2);
+            const blendGamma = Math.max(0.25, Math.min(4, Number.isFinite(blendGammaParam) ? blendGammaParam : 2));
 
             const sseConfig = {
                 poster: posterUrl && createImage(posterUrl),
@@ -48,6 +50,7 @@
                 renderer,
                 aa: url.searchParams.has('aa'),
                 budget,
+                blendGamma,
                 heatmap: url.searchParams.has('heatmap'),
                 fullload: url.searchParams.has('fullload'),
                 debug: url.searchParams.has('debug'),

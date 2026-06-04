@@ -464,8 +464,9 @@ class Viewer {
                 };
 
                 const updateBlendOpacity = () => {
-                    const opacityA = state.compareMode === 'blend' ? 1 - state.blendPosition : 1;
-                    const opacityB = state.compareMode === 'blend' ? state.blendPosition : 1;
+                    const visualBlend = Math.pow(state.blendPosition, config.blendGamma);
+                    const opacityA = state.compareMode === 'blend' ? 1 - visualBlend : 1;
+                    const opacityB = state.compareMode === 'blend' ? visualBlend : 1;
 
                     if (blendMaterialA) {
                         patchGsplatOpacity(blendMaterialA, opacityA, app);
