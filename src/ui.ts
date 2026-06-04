@@ -420,8 +420,10 @@ const initUI = (global: Global) => {
     };
 
     if (config.contentUrlB) {
-        dom.compareLabelA.textContent = `A: ${filenameFromUrl(config.contentUrlA ?? config.contentUrl)}`;
-        dom.compareLabelB.textContent = `B: ${filenameFromUrl(config.contentUrlB)}`;
+        const labelA = config.labelA ?? filenameFromUrl(config.contentUrlA ?? config.contentUrl);
+        const labelB = config.labelB ?? filenameFromUrl(config.contentUrlB);
+        dom.compareLabelA.textContent = `A: ${labelA}`;
+        dom.compareLabelB.textContent = `B: ${labelB}`;
         dom.compareLabels.classList.remove('hidden');
         dom.compareControls.classList.remove('hidden');
     }

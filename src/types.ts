@@ -18,6 +18,8 @@ type Config = {
     contentsA?: Promise<Response>;
     contentUrlB?: string;
     contentsB?: Promise<Response>;
+    labelA?: string;
+    labelB?: string;
     collisionUrl?: string;
 
     noui: boolean;
