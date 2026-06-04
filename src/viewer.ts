@@ -464,7 +464,7 @@ class Viewer {
                 };
 
                 const updateBlendOpacity = () => {
-                    const visualBlend = Math.pow(state.blendPosition, config.blendGamma);
+                    const visualBlend = Math.pow(state.blendPosition, state.blendGamma);
                     const opacityA = state.compareMode === 'blend' ? 1 - visualBlend : 1;
                     const opacityB = state.compareMode === 'blend' ? visualBlend : 1;
 
@@ -522,6 +522,7 @@ class Viewer {
                 events.on('compareMode:changed', applyCompareMode);
                 events.on('wipePosition:changed', updateWipeRects);
                 events.on('blendPosition:changed', updateBlendOpacity);
+                events.on('blendGamma:changed', updateBlendOpacity);
                 applyCompareMode();
             }
 

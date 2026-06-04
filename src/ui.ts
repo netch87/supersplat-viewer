@@ -236,7 +236,7 @@ const initUI = (global: Global) => {
         'play', 'pause',
         'compareLabels', 'compareLabelA', 'compareLabelB',
         'compareControls', 'compareA', 'compareB', 'compareOverlay', 'compareWipe', 'compareBlend',
-        'compareBlendControls', 'compareBlendSlider',
+        'compareBlendControls', 'compareBlendSlider', 'compareBlendGammaValue', 'compareBlendGammaSlider',
         'compareWipeDivider',
         'settings', 'settingsPanel',
         'orbitCamera', 'flyCamera', 'fpsCamera',
@@ -414,6 +414,11 @@ const initUI = (global: Global) => {
         (dom.compareBlendSlider as HTMLInputElement).value = String(state.blendPosition);
     };
 
+    const updateBlendGammaSlider = () => {
+        (dom.compareBlendGammaSlider as HTMLInputElement).value = String(state.blendGamma);
+        dom.compareBlendGammaValue.textContent = `Blend Gamma: ${state.blendGamma.toFixed(1)}`;
+    };
+
     if (config.contentUrlB) {
         dom.compareLabelA.textContent = `A: ${filenameFromUrl(config.contentUrlA ?? config.contentUrl)}`;
         dom.compareLabelB.textContent = `B: ${filenameFromUrl(config.contentUrlB)}`;
@@ -445,6 +450,10 @@ const initUI = (global: Global) => {
         state.blendPosition = Number((dom.compareBlendSlider as HTMLInputElement).value);
     });
 
+    dom.compareBlendGammaSlider.addEventListener('input', () => {
+        state.blendGamma = Number((dom.compareBlendGammaSlider as HTMLInputElement).value);
+    });
+
     const setWipePosition = (event: PointerEvent) => {
         state.wipePosition = Math.max(0, Math.min(1, event.clientX / window.innerWidth));
     };
@@ -467,9 +476,11 @@ const initUI = (global: Global) => {
     events.on('compareMode:changed', updateCompareMode);
     events.on('wipePosition:changed', updateWipeDivider);
     events.on('blendPosition:changed', updateBlendSlider);
+    events.on('blendGamma:changed', updateBlendGammaSlider);
     updateCompareMode();
     updateWipeDivider();
     updateBlendSlider();
+    updateBlendGammaSlider();
 
     // AR/VR
     const arChanged = () => dom.arMode.classList[state.hasAR ? 'remove' : 'add']('hidden');

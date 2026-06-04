@@ -28,8 +28,8 @@
 
             const budgetParam = url.searchParams.get('budget');
             const budget = budgetParam !== null ? Number(budgetParam) : undefined;
-            const blendGammaParam = Number(url.searchParams.get('blendGamma') ?? 2);
-            const blendGamma = Math.max(0.25, Math.min(4, Number.isFinite(blendGammaParam) ? blendGammaParam : 2));
+            const blendGammaParam = Number(url.searchParams.get('blendGamma') ?? 3);
+            const blendGamma = Math.max(0.5, Math.min(5, Number.isFinite(blendGammaParam) ? blendGammaParam : 3));
 
             const sseConfig = {
                 poster: posterUrl && createImage(posterUrl),
@@ -165,6 +165,10 @@
 
                     <div id="compareBlendControls" class="compareBlendControls hidden">
                         <input id="compareBlendSlider" type="range" min="0" max="1" step="0.01" value="0.5">
+                        <label>
+                            <span id="compareBlendGammaValue">Blend Gamma: 3.0</span>
+                            <input id="compareBlendGammaSlider" type="range" min="0.5" max="5" step="0.1" value="3">
+                        </label>
                     </div>
 
                     <div class="buttonGroup">

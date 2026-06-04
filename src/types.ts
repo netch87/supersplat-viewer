@@ -59,6 +59,7 @@ type State = {
     compareMode: CompareMode;
     wipePosition: number;
     blendPosition: number;
+    blendGamma: number;
 };
 
 type Global = {
