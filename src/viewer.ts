@@ -407,8 +407,8 @@ class Viewer {
 
                 const updateWipeRects = () => {
                     const split = state.wipePosition;
-                    scissorA.set(split, 0, 1 - split, 1);
-                    scissorB.set(0, 0, split, 1);
+                    scissorA.set(0, 0, split, 1);
+                    scissorB.set(split, 0, 1 - split, 1);
 
                     if (state.compareMode === 'wipe' && wipeCamera) {
                         camera.camera.scissorRect = scissorA;
