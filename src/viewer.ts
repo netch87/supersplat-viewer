@@ -240,6 +240,9 @@ class Viewer {
         const prevWorld = new Mat4();
         const sceneBound = new BoundingBox();
         let wipeCamera: Entity | null = null;
+        const enableCameraScissor = (component: CameraComponent, enabled: boolean) => {
+            (component as unknown as { _camera: { _scissorRectClear: boolean } })._camera._scissorRectClear = enabled;
+        };
 
         // track the camera state and trigger a render when it changes
         app.on('framerender', () => {
@@ -404,8 +407,8 @@ class Viewer {
 
                 const updateWipeRects = () => {
                     const split = state.wipePosition;
-                    scissorA.set(0, 0, split, 1);
-                    scissorB.set(split, 0, 1 - split, 1);
+                    scissorA.set(split, 0, 1 - split, 1);
+                    scissorB.set(0, 0, split, 1);
 
                     if (state.compareMode === 'wipe' && wipeCamera) {
                         camera.camera.scissorRect = scissorA;
@@ -423,6 +426,7 @@ class Viewer {
                     gsplatB.layers = isWipe ? [compareLayerB.id] : baseLayersB;
                     camera.camera.rect = fullRect;
                     camera.camera.scissorRect = isWipe ? scissorA : fullRect;
+                    enableCameraScissor(camera.camera, isWipe);
                     camera.camera.layers = isWipe ?
                         [...withoutCompareLayers(camera.camera.layers), compareLayerA.id] :
                         withoutCompareLayers(camera.camera.layers);
@@ -430,6 +434,7 @@ class Viewer {
                     wipeCamera.camera.enabled = isWipe;
                     wipeCamera.camera.rect = fullRect;
                     wipeCamera.camera.scissorRect = isWipe ? scissorB : fullRect;
+                    enableCameraScissor(wipeCamera.camera, isWipe);
                     wipeCamera.camera.layers = isWipe ?
                         [...withoutCompareLayers(camera.camera.layers), compareLayerB.id] :
                         withoutCompareLayers(wipeCamera.camera.layers);
