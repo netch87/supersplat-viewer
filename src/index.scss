@@ -362,6 +362,33 @@ button {
     }
 }
 
+.compareWipeDivider {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 3px;
+    transform: translateX(-50%);
+    cursor: ew-resize;
+    z-index: 2;
+
+    background-color: rgba(white, 0.9);
+    box-shadow: 0 0 0 1px rgba(black, 0.35), 0 0 12px rgba(black, 0.35);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 48px;
+        transform: translate(-50%, -50%);
+        border-radius: 10px;
+        background-color: rgba($clr-bkg-dark, 0.75);
+        border: 1px solid rgba(white, 0.25);
+    }
+}
+
 /* settingsPanel */
 
 #settingsPanel {

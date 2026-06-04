@@ -6,7 +6,7 @@ type CameraMode = 'orbit' | 'anim' | 'fly' | 'walk';
 
 type InputMode = 'desktop' | 'touch';
 
-type CompareMode = 'a' | 'b' | 'overlay';
+type CompareMode = 'a' | 'b' | 'overlay' | 'wipe';
 
 // configuration options are immutable at runtime
 type Config = {
@@ -56,6 +56,7 @@ type State = {
     controlsHidden: boolean;
     gamingControls: boolean;
     compareMode: CompareMode;
+    wipePosition: number;
 };
 
 type Global = {

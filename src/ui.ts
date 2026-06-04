@@ -235,7 +235,8 @@ const initUI = (global: Global) => {
         'buttonContainer',
         'play', 'pause',
         'compareLabels', 'compareLabelA', 'compareLabelB',
-        'compareControls', 'compareA', 'compareB', 'compareOverlay',
+        'compareControls', 'compareA', 'compareB', 'compareOverlay', 'compareWipe',
+        'compareWipeDivider',
         'settings', 'settingsPanel',
         'orbitCamera', 'flyCamera', 'fpsCamera',
         'performanceModeRow', 'performanceModeCheck', 'performanceModeOption',
@@ -398,6 +399,12 @@ const initUI = (global: Global) => {
         dom.compareA.classList.toggle('active', state.compareMode === 'a');
         dom.compareB.classList.toggle('active', state.compareMode === 'b');
         dom.compareOverlay.classList.toggle('active', state.compareMode === 'overlay');
+        dom.compareWipe.classList.toggle('active', state.compareMode === 'wipe');
+        dom.compareWipeDivider.classList.toggle('hidden', state.compareMode !== 'wipe');
+    };
+
+    const updateWipeDivider = () => {
+        dom.compareWipeDivider.style.left = `${state.wipePosition * 100}%`;
     };
 
     if (config.contentUrlB) {
@@ -419,8 +426,33 @@ const initUI = (global: Global) => {
         state.compareMode = 'overlay';
     });
 
+    dom.compareWipe.addEventListener('click', () => {
+        state.compareMode = 'wipe';
+    });
+
+    const setWipePosition = (event: PointerEvent) => {
+        state.wipePosition = Math.max(0.05, Math.min(0.95, event.clientX / window.innerWidth));
+    };
+
+    dom.compareWipeDivider.addEventListener('pointerdown', (event: PointerEvent) => {
+        dom.compareWipeDivider.setPointerCapture(event.pointerId);
+        setWipePosition(event);
+        event.stopPropagation();
+        event.preventDefault();
+    });
+
+    dom.compareWipeDivider.addEventListener('pointermove', (event: PointerEvent) => {
+        if (dom.compareWipeDivider.hasPointerCapture(event.pointerId)) {
+            setWipePosition(event);
+            event.stopPropagation();
+            event.preventDefault();
+        }
+    });
+
     events.on('compareMode:changed', updateCompareMode);
+    events.on('wipePosition:changed', updateWipeDivider);
     updateCompareMode();
+    updateWipeDivider();
 
     // AR/VR
     const arChanged = () => dom.arMode.classList[state.hasAR ? 'remove' : 'add']('hidden');

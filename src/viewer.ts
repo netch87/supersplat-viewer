@@ -3,8 +3,8 @@ import {
     CameraFrame,
     type CameraComponent,
     Color,
-    type Entity,
-    type Layer,
+    Entity,
+    Layer,
     RenderTarget,
     Mat4,
     MiniStats,
@@ -19,6 +19,7 @@ import {
     TONEMAP_ACES2,
     TONEMAP_NEUTRAL,
     Vec3,
+    Vec4,
     GSPLAT_DEBUG_LOD,
     GSPLAT_DEBUG_NONE,
     GSPLAT_RENDERER_RASTER_CPU_SORT,
@@ -238,6 +239,7 @@ class Viewer {
         const prevProj = new Mat4();
         const prevWorld = new Mat4();
         const sceneBound = new BoundingBox();
+        let wipeCamera: Entity | null = null;
 
         // track the camera state and trigger a render when it changes
         app.on('framerender', () => {
@@ -288,6 +290,17 @@ class Viewer {
 
             cameraEntity.camera.farClip = far;
             cameraEntity.camera.nearClip = near;
+
+            if (wipeCamera) {
+                wipeCamera.setPosition(camera.position);
+                wipeCamera.setEulerAngles(camera.angles);
+                wipeCamera.camera.fov = camera.fov;
+                wipeCamera.camera.horizontalFov = cameraEntity.camera.horizontalFov;
+                wipeCamera.camera.farClip = far;
+                wipeCamera.camera.nearClip = near;
+                wipeCamera.camera.toneMapping = cameraEntity.camera.toneMapping;
+                wipeCamera.camera.clearColor.copy(cameraEntity.camera.clearColor);
+            }
         };
 
         // handle application update
@@ -363,21 +376,70 @@ class Viewer {
                 }
             }
 
-            const applyCompareMode = () => {
-                const entityA = gsplatEntities[0];
-                const entityB = gsplatEntities[1];
+            const entityA = gsplatEntities[0];
+            const entityB = gsplatEntities[1];
+            if (entityB) {
+                const gsplatA = entityA.gsplat as GSplatComponent;
+                const gsplatB = entityB.gsplat as GSplatComponent;
+                const baseLayersA = gsplatA.layers.slice();
+                const baseLayersB = gsplatB.layers.slice();
+                const compareLayerA = new Layer({ name: 'CompareA' });
+                const compareLayerB = new Layer({ name: 'CompareB' });
+                const fullRect = new Vec4(0, 0, 1, 1);
+                const leftRect = new Vec4();
+                const rightRect = new Vec4();
 
-                if (!entityB) {
-                    return;
-                }
+                app.scene.layers.push(compareLayerA);
+                app.scene.layers.push(compareLayerB);
 
-                entityA.enabled = state.compareMode !== 'b';
-                entityB.enabled = state.compareMode !== 'a';
-                app.renderNextFrame = true;
-            };
+                wipeCamera = new Entity('camera wipe b');
+                app.root.addChild(wipeCamera);
+                wipeCamera.addComponent('camera');
+                wipeCamera.camera.enabled = false;
+                wipeCamera.camera.priority = camera.camera.priority + 1;
 
-            events.on('compareMode:changed', applyCompareMode);
-            applyCompareMode();
+                const withoutCompareLayers = (layers: number[]) => {
+                    return layers.filter(id => id !== compareLayerA.id && id !== compareLayerB.id);
+                };
+
+                const updateWipeRects = () => {
+                    const split = state.wipePosition;
+                    leftRect.set(0, 0, split, 1);
+                    rightRect.set(split, 0, 1 - split, 1);
+
+                    if (state.compareMode === 'wipe' && wipeCamera) {
+                        camera.camera.rect = leftRect;
+                        wipeCamera.camera.rect = rightRect;
+                        app.renderNextFrame = true;
+                    }
+                };
+
+                const applyCompareMode = () => {
+                    const isWipe = state.compareMode === 'wipe';
+
+                    entityA.enabled = state.compareMode !== 'b';
+                    entityB.enabled = state.compareMode !== 'a';
+                    gsplatA.layers = isWipe ? [compareLayerA.id] : baseLayersA;
+                    gsplatB.layers = isWipe ? [compareLayerB.id] : baseLayersB;
+                    camera.camera.rect = isWipe ? leftRect : fullRect;
+                    camera.camera.layers = isWipe ?
+                        [...withoutCompareLayers(camera.camera.layers), compareLayerA.id] :
+                        withoutCompareLayers(camera.camera.layers);
+
+                    wipeCamera.camera.enabled = isWipe;
+                    wipeCamera.camera.rect = isWipe ? rightRect : fullRect;
+                    wipeCamera.camera.layers = isWipe ?
+                        [...withoutCompareLayers(camera.camera.layers), compareLayerB.id] :
+                        withoutCompareLayers(wipeCamera.camera.layers);
+
+                    updateWipeRects();
+                    app.renderNextFrame = true;
+                };
+
+                events.on('compareMode:changed', applyCompareMode);
+                events.on('wipePosition:changed', updateWipeRects);
+                applyCompareMode();
+            }
 
             if (!config.noui) {
                 this.annotations = new Annotations(global, this.cameraFrame != null);
