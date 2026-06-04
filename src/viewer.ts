@@ -1,4 +1,5 @@
 import {
+    type AppBase,
     BoundingBox,
     CameraFrame,
     type CameraComponent,
@@ -25,6 +26,7 @@ import {
     GSPLAT_RENDERER_RASTER_CPU_SORT,
     GSPLAT_RENDERER_RASTER_GPU_SORT,
     GSplatComponent,
+    type ShaderMaterial,
     platform
 } from 'playcanvas';
 
@@ -64,6 +66,48 @@ fn prepareOutputFromGamma(gammaColor: vec3f, depth: f32) -> vec3f {
     return gammaColor;
 }
 `;
+
+const opacityPatchedMaterials = new WeakSet<ShaderMaterial>();
+
+const patchGsplatOpacity = (material: ShaderMaterial, opacity: number, app: AppBase) => {
+    if (!opacityPatchedMaterials.has(material)) {
+        const glsl = ShaderChunks.get(app.graphicsDevice, 'glsl');
+        const wgsl = ShaderChunks.get(app.graphicsDevice, 'wgsl');
+
+        material.shaderChunks.glsl.add({
+            gsplatPS: patchChunk(
+                patchChunk(
+                    glsl.get('gsplatPS'),
+                    'uniform float alphaClipForward;',
+                    'uniform float alphaClipForward;\nuniform float compareOpacity;',
+                    'glsl gsplatPS compare opacity uniform'
+                ),
+                '#else\n\t\tif (alpha < alphaClipForward) {',
+                '#else\n\t\talpha *= compareOpacity;\n\t\tif (alpha < alphaClipForward) {',
+                'glsl gsplatPS compare opacity'
+            )
+        });
+
+        material.shaderChunks.wgsl.add({
+            gsplatPS: patchChunk(
+                patchChunk(
+                    wgsl.get('gsplatPS'),
+                    'uniform alphaClipForward: f32;',
+                    'uniform alphaClipForward: f32;\nuniform compareOpacity: f32;',
+                    'wgsl gsplatPS compare opacity uniform'
+                ),
+                '#else\n\t\tif (alpha < half(uniform.alphaClipForward)) {',
+                '#else\n\t\talpha *= half(uniform.compareOpacity);\n\t\tif (alpha < half(uniform.alphaClipForward)) {',
+                'wgsl gsplatPS compare opacity'
+            )
+        });
+
+        material.update();
+        opacityPatchedMaterials.add(material);
+    }
+
+    material.setParameter('compareOpacity', opacity);
+};
 
 const rendererTable: Record<Config['renderer'], number> = {
     'webgl': GSPLAT_RENDERER_RASTER_CPU_SORT,
@@ -391,6 +435,8 @@ class Viewer {
                 const fullRect = new Vec4(0, 0, 1, 1);
                 const scissorA = new Vec4();
                 const scissorB = new Vec4();
+                let blendMaterialA: ShaderMaterial | null = null;
+                let blendMaterialB: ShaderMaterial | null = null;
 
                 app.scene.layers.push(compareLayerA);
                 app.scene.layers.push(compareLayerB);
@@ -417,19 +463,47 @@ class Viewer {
                     }
                 };
 
+                const updateBlendOpacity = () => {
+                    const opacityA = state.compareMode === 'blend' ? state.blendPosition : 1;
+                    const opacityB = state.compareMode === 'blend' ? 1 - state.blendPosition : 1;
+
+                    if (blendMaterialA) {
+                        patchGsplatOpacity(blendMaterialA, opacityA, app);
+                    }
+                    if (blendMaterialB) {
+                        patchGsplatOpacity(blendMaterialB, opacityB, app);
+                    }
+                    app.renderNextFrame = true;
+                };
+
+                app.systems.gsplat.on('material:created', (material: ShaderMaterial, _camera: unknown, layer: Layer) => {
+                    if (layer === compareLayerA) {
+                        blendMaterialA = material;
+                        updateBlendOpacity();
+                    } else if (layer === compareLayerB) {
+                        blendMaterialB = material;
+                        updateBlendOpacity();
+                    }
+                });
+
                 const applyCompareMode = () => {
                     const isWipe = state.compareMode === 'wipe';
+                    const isBlend = state.compareMode === 'blend';
+                    const useCompareLayers = isWipe || isBlend;
 
                     entityA.enabled = state.compareMode !== 'b';
                     entityB.enabled = state.compareMode !== 'a';
-                    gsplatA.layers = isWipe ? [compareLayerA.id] : baseLayersA;
-                    gsplatB.layers = isWipe ? [compareLayerB.id] : baseLayersB;
+                    gsplatA.layers = useCompareLayers ? [compareLayerA.id] : baseLayersA;
+                    gsplatB.layers = useCompareLayers ? [compareLayerB.id] : baseLayersB;
                     camera.camera.rect = fullRect;
                     camera.camera.scissorRect = isWipe ? scissorA : fullRect;
                     enableCameraScissor(camera.camera, isWipe);
-                    camera.camera.layers = isWipe ?
-                        [...withoutCompareLayers(camera.camera.layers), compareLayerA.id] :
-                        withoutCompareLayers(camera.camera.layers);
+                    camera.camera.layers = withoutCompareLayers(camera.camera.layers);
+                    if (isWipe) {
+                        camera.camera.layers = [...camera.camera.layers, compareLayerA.id];
+                    } else if (isBlend) {
+                        camera.camera.layers = [...camera.camera.layers, compareLayerA.id, compareLayerB.id];
+                    }
 
                     wipeCamera.camera.enabled = isWipe;
                     wipeCamera.camera.rect = fullRect;
@@ -440,11 +514,13 @@ class Viewer {
                         withoutCompareLayers(wipeCamera.camera.layers);
 
                     updateWipeRects();
+                    updateBlendOpacity();
                     app.renderNextFrame = true;
                 };
 
                 events.on('compareMode:changed', applyCompareMode);
                 events.on('wipePosition:changed', updateWipeRects);
+                events.on('blendPosition:changed', updateBlendOpacity);
                 applyCompareMode();
             }
 

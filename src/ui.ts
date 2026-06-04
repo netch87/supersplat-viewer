@@ -235,7 +235,8 @@ const initUI = (global: Global) => {
         'buttonContainer',
         'play', 'pause',
         'compareLabels', 'compareLabelA', 'compareLabelB',
-        'compareControls', 'compareA', 'compareB', 'compareOverlay', 'compareWipe',
+        'compareControls', 'compareA', 'compareB', 'compareOverlay', 'compareWipe', 'compareBlend',
+        'compareBlendControls', 'compareBlendSlider',
         'compareWipeDivider',
         'settings', 'settingsPanel',
         'orbitCamera', 'flyCamera', 'fpsCamera',
@@ -400,11 +401,17 @@ const initUI = (global: Global) => {
         dom.compareB.classList.toggle('active', state.compareMode === 'b');
         dom.compareOverlay.classList.toggle('active', state.compareMode === 'overlay');
         dom.compareWipe.classList.toggle('active', state.compareMode === 'wipe');
+        dom.compareBlend.classList.toggle('active', state.compareMode === 'blend');
         dom.compareWipeDivider.classList.toggle('hidden', state.compareMode !== 'wipe');
+        dom.compareBlendControls.classList.toggle('hidden', state.compareMode !== 'blend');
     };
 
     const updateWipeDivider = () => {
         dom.compareWipeDivider.style.left = `${state.wipePosition * 100}%`;
+    };
+
+    const updateBlendSlider = () => {
+        (dom.compareBlendSlider as HTMLInputElement).value = String(state.blendPosition);
     };
 
     if (config.contentUrlB) {
@@ -430,6 +437,14 @@ const initUI = (global: Global) => {
         state.compareMode = 'wipe';
     });
 
+    dom.compareBlend.addEventListener('click', () => {
+        state.compareMode = 'blend';
+    });
+
+    dom.compareBlendSlider.addEventListener('input', () => {
+        state.blendPosition = Number((dom.compareBlendSlider as HTMLInputElement).value);
+    });
+
     const setWipePosition = (event: PointerEvent) => {
         state.wipePosition = Math.max(0, Math.min(1, event.clientX / window.innerWidth));
     };
@@ -451,8 +466,10 @@ const initUI = (global: Global) => {
 
     events.on('compareMode:changed', updateCompareMode);
     events.on('wipePosition:changed', updateWipeDivider);
+    events.on('blendPosition:changed', updateBlendSlider);
     updateCompareMode();
     updateWipeDivider();
+    updateBlendSlider();
 
     // AR/VR
     const arChanged = () => dom.arMode.classList[state.hasAR ? 'remove' : 'add']('hidden');

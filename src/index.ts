@@ -245,7 +245,8 @@ const main = async (canvas: HTMLCanvasElement, settingsJson: any, config: Config
         controlsHidden: false,
         gamingControls: localStorage.getItem('gamingControls') === 'true',
         compareMode: 'overlay',
-        wipePosition: 0.5
+        wipePosition: 0.5,
+        blendPosition: 0.5
     });
 
     const global: Global = {

@@ -389,6 +389,16 @@ button {
     }
 }
 
+.compareBlendControls {
+    width: 240px;
+    padding: 4px 0;
+
+    input {
+        width: 100%;
+        accent-color: white;
+    }
+}
+
 /* settingsPanel */
 
 #settingsPanel {
