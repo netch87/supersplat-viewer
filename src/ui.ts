@@ -431,7 +431,7 @@ const initUI = (global: Global) => {
     });
 
     const setWipePosition = (event: PointerEvent) => {
-        state.wipePosition = Math.max(0.05, Math.min(0.95, event.clientX / window.innerWidth));
+        state.wipePosition = Math.max(0, Math.min(1, event.clientX / window.innerWidth));
     };
 
     dom.compareWipeDivider.addEventListener('pointerdown', (event: PointerEvent) => {

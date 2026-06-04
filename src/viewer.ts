@@ -386,8 +386,8 @@ class Viewer {
                 const compareLayerA = new Layer({ name: 'CompareA' });
                 const compareLayerB = new Layer({ name: 'CompareB' });
                 const fullRect = new Vec4(0, 0, 1, 1);
-                const leftRect = new Vec4();
-                const rightRect = new Vec4();
+                const scissorA = new Vec4();
+                const scissorB = new Vec4();
 
                 app.scene.layers.push(compareLayerA);
                 app.scene.layers.push(compareLayerB);
@@ -404,12 +404,12 @@ class Viewer {
 
                 const updateWipeRects = () => {
                     const split = state.wipePosition;
-                    leftRect.set(0, 0, split, 1);
-                    rightRect.set(split, 0, 1 - split, 1);
+                    scissorA.set(0, 0, split, 1);
+                    scissorB.set(split, 0, 1 - split, 1);
 
                     if (state.compareMode === 'wipe' && wipeCamera) {
-                        camera.camera.rect = leftRect;
-                        wipeCamera.camera.rect = rightRect;
+                        camera.camera.scissorRect = scissorA;
+                        wipeCamera.camera.scissorRect = scissorB;
                         app.renderNextFrame = true;
                     }
                 };
@@ -421,13 +421,15 @@ class Viewer {
                     entityB.enabled = state.compareMode !== 'a';
                     gsplatA.layers = isWipe ? [compareLayerA.id] : baseLayersA;
                     gsplatB.layers = isWipe ? [compareLayerB.id] : baseLayersB;
-                    camera.camera.rect = isWipe ? leftRect : fullRect;
+                    camera.camera.rect = fullRect;
+                    camera.camera.scissorRect = isWipe ? scissorA : fullRect;
                     camera.camera.layers = isWipe ?
                         [...withoutCompareLayers(camera.camera.layers), compareLayerA.id] :
                         withoutCompareLayers(camera.camera.layers);
 
                     wipeCamera.camera.enabled = isWipe;
-                    wipeCamera.camera.rect = isWipe ? rightRect : fullRect;
+                    wipeCamera.camera.rect = fullRect;
+                    wipeCamera.camera.scissorRect = isWipe ? scissorB : fullRect;
                     wipeCamera.camera.layers = isWipe ?
                         [...withoutCompareLayers(camera.camera.layers), compareLayerB.id] :
                         withoutCompareLayers(wipeCamera.camera.layers);
